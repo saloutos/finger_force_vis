@@ -9,6 +9,8 @@ from utils import *
 import pycapacity.robot as capacity
 from pycapacity.visual import * # pycapacity visualisation tools
 
+import plotly.graph_objects as go
+
 # Load CAD mesh files
 print("loading CAD mesh files (this may take a while)")
 
@@ -44,31 +46,51 @@ t_max = 2.0*np.ones(4)  # joint torque limits max and min
 t_min = -2.0*np.ones(4)
 
 f_poly = capacity.force_polytope(J, t_min, t_max) # calculate the polytope
+f_poly.find_faces()
 
-print(f_poly.vertices) # display the vertices
+poly_scale = 0.0005
+poly_v = np.array(f_poly.vertices).T
+poly_F = np.array(f_poly.face_indices)
 
-# plotting the polytope
+poly_v = poly_scale*poly_v + p_ee
 
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
+# # plotting the polytope
 
-# draw finger
-visualize_finger(ax, T, obj, 0.02)
+# fig = plt.figure()
+# ax = fig.add_subplot(111, projection='3d')
 
-# draw faces and vertices
-plot_polytope(plot=ax, 
-              polytope=f_poly, 
-              label='force', 
-              edge_color='black', 
-              face_color=[0.75,0.0,0.75],
-              alpha = 0.4,
-              center = p_ee,
-              scale = 0.0002,
-              show_vertices = False)
+# # draw finger
+# visualize_finger(ax, T, obj, 0.02)
 
-ax.set_aspect('equal')
-ax.view_init(50, 75)
+# # draw faces and vertices
+# plot_polytope(plot=ax, 
+#               polytope=f_poly, 
+#               label='force', 
+#               edge_color='black', 
+#               face_color=[0.75,0.0,0.75],
+#               alpha = 0.4,
+#               center = p_ee,
+#               scale = 0.0002,
+#               show_vertices = False)
 
-plt.legend()
-plt.show()
+# ax.set_aspect('equal')
+# ax.view_init(50, 75)
 
+# plt.legend()
+# plt.show()
+
+
+
+
+# visualize finger using plotly
+fig = go.Figure()
+
+visualize_finger_plotly(fig, T, obj, 0.02)
+
+fig.add_trace( go.Mesh3d( x=poly_v[:,0], y=poly_v[:,1], z=poly_v[:,2], \
+                         i=poly_F[:,0], j=poly_F[:,1], k=poly_F[:,2], \
+                            opacity=0.15))
+
+fig.update_scenes(aspectmode='data')
+
+fig.show()

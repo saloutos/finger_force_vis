@@ -127,9 +127,9 @@ def visualize_finger(axs, T, obj, SE3_scale):
     axs.set_zlabel('Z')
     axs.grid(True)
 
-def visualize_finger_plotly(T, obj, SE3_scale):
+def visualize_finger_plotly(fig, T, obj, SE3_scale):
     
-    meshes = []
+    # meshes = []
 
     # Draw each body and its frame
     for ii in range(4):
@@ -137,12 +137,12 @@ def visualize_finger_plotly(T, obj, SE3_scale):
         F = np.array(obj[ii].f['v'])
         # axs.plot_trisurf(V[:, 0], V[:, 1], V[:, 2], triangles=F, color=(0, 0, 0, 0.15))
 
-        meshes.append( go.Mesh3d( x=V[:,0], y=V[:,1], z=V[:,2], \
+        # meshes.append( go.Mesh3d( x=V[:,0], y=V[:,1], z=V[:,2], \
+        #                         i = F[:,0], j=F[:,1], k=F[:,2]) )
+        fig.add_trace( go.Mesh3d( x=V[:,0], y=V[:,1], z=V[:,2], \
                                 i = F[:,0], j=F[:,1], k=F[:,2]) )
 
-
-    fig = go.Figure(data=meshes)
-    fig.show()
+    # fig = go.Figure(data=meshes)
 
     # # Draw end-effector frame
     # draw_SE3(axs, T[:, :, 4], SE3_scale, 'rgb')

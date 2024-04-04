@@ -6,6 +6,8 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from utils import *
 
+import plotly.graph_objects as go
+
 # Load CAD mesh files
 print("loading CAD mesh files (this may take a while)")
 
@@ -66,4 +68,6 @@ tau_act_test = np.dot(Jjoint.T, tau_test)
 # plt.show()
 
 # visualize finger using plotly
-visualize_finger_plotly(T, obj, 0.02)
+fig = go.Figure()
+visualize_finger_plotly(fig, T, obj, 0.02)
+fig.show()

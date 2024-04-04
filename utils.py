@@ -2,6 +2,9 @@ import numpy as np
 import scipy
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+
+import plotly.graph_objects as go
 
 # helper functions
 class Obj:
@@ -124,6 +127,34 @@ def visualize_finger(axs, T, obj, SE3_scale):
     axs.set_zlabel('Z')
     axs.grid(True)
 
+def visualize_finger_plotly(T, obj, SE3_scale):
+    
+    meshes = []
+
+    # Draw each body and its frame
+    for ii in range(4):
+        V = np.dot(T[:3, :3, ii], obj[ii].v.T).T + T[:3, 3, ii]
+        F = np.array(obj[ii].f['v'])
+        # axs.plot_trisurf(V[:, 0], V[:, 1], V[:, 2], triangles=F, color=(0, 0, 0, 0.15))
+
+        meshes.append( go.Mesh3d( x=V[:,0], y=V[:,1], z=V[:,2], \
+                                i = F[:,0], j=F[:,1], k=F[:,2]) )
+
+
+    fig = go.Figure(data=meshes)
+    fig.show()
+
+    # # Draw end-effector frame
+    # draw_SE3(axs, T[:, :, 4], SE3_scale, 'rgb')
+
+    # axs.set_xlabel('X')
+    # axs.set_ylabel('Y')
+    # axs.set_zlabel('Z')
+    # axs.grid(True)
+
+
+
+
 def show_ee_vel_joint_vels(axs, T, v, qd, scale):
     # show velocity vector (and joint vels)
     # End effector velocity
@@ -133,22 +164,22 @@ def show_ee_vel_joint_vels(axs, T, v, qd, scale):
     # MCR joint velocity
     p_plt = T[:3, 3, 0]
     ax_plt = T[:3, 1, 0]
-    qd_plt = scale * qd[0] * ax_plt
+    qd_plt = 0.1 * scale * qd[0] * ax_plt
     axs.quiver(p_plt[0], p_plt[1], p_plt[2], qd_plt[0], qd_plt[1], qd_plt[2], color=[1.0, 0.65, 0.0])
     # MCP joint velocity
     p_plt = T[:3, 3, 1]
     ax_plt = T[:3, 2, 1]
-    qd_plt = scale * qd[1] * ax_plt
+    qd_plt = 0.1 * scale * qd[1] * ax_plt
     axs.quiver(p_plt[0], p_plt[1], p_plt[2], qd_plt[0], qd_plt[1], qd_plt[2], color=[1.0, 0.65, 0.0])
     # PIP joint velocity
     p_plt = T[:3, 3, 2]
     ax_plt = T[:3, 2, 2]
-    qd_plt = scale * qd[2] * ax_plt
+    qd_plt = 0.1 * scale * qd[2] * ax_plt
     axs.quiver(p_plt[0], p_plt[1], p_plt[2], qd_plt[0], qd_plt[1], qd_plt[2], color=[1.0, 0.65, 0.0])
     # DIP joint velocity
     p_plt = T[:3, 3, 3]
     ax_plt = T[:3, 2, 3]
-    qd_plt = scale * qd[3] * ax_plt
+    qd_plt = 0.1 * scale * qd[3] * ax_plt
     axs.quiver(p_plt[0], p_plt[1], p_plt[2], qd_plt[0], qd_plt[1], qd_plt[2], color=[1.0, 0.65, 0.0])
 
 def show_ee_force_joint_torques(axs, T, F, tau, scale): 
@@ -156,7 +187,7 @@ def show_ee_force_joint_torques(axs, T, F, tau, scale):
 
     # End effector force
     p_ee = T[:3, 3, 4]
-    F_plt = 0.1* scale * F
+    F_plt = 0.1 * scale * F
     axs.quiver(p_ee[0], p_ee[1], p_ee[2], F_plt[0], F_plt[1], F_plt[2], color=[0.6, 0.0, 0.75])
     # MCR joint torque
     p_plt = T[:3, 3, 0]

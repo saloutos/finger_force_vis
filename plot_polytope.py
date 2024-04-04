@@ -3,8 +3,11 @@ import scipy
 import scipy.io
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from utils import *
+
+# import polytope lib
+import pycapacity.robot as capacity
+from pycapacity.visual import * # pycapacity visualisation tools
 
 # Load CAD mesh files
 print("loading CAD mesh files (this may take a while)")
@@ -23,11 +26,10 @@ for ii in range(n):
 print("loaded CAD mesh files")
 
 # Define the values for q_test, qd_test, and F_test
-q_test = np.array([-0.3, 0.4, 0.2, 0.1])  # mcr, mcp, pip, dip
-qd_test = np.array([1.0, 0.0, 0.0, 0.0])  # mcr, mcp, pip, dip
-F_test = np.array([1.0, 1.0, 0.0])  # x, y, z at end effector
+q_test = np.array([-np.pi/2, 0.5, 0.5, 0.5])  # mcr, mcp, pip, dip
 
 T, J  = finger_kinematics(q_test)
+p_ee = T[:3, 3, 4]
 
 # from joint space to actuator space, i.e. phidot = Jact*theta_dot
 Jact = np.array([[1.0, 0.0, 0.0, 0.0],
@@ -37,33 +39,36 @@ Jact = np.array([[1.0, 0.0, 0.0, 0.0],
 # from actuator space to joint space, i.e. thetadot = Jjoint*phi_dot
 Jjoint = np.linalg.pinv(Jact)
 
-# Calculate velocities
-v_test = np.dot(J, qd_test)
+# torque limits 
+t_max = 2.0*np.ones(4)  # joint torque limits max and min
+t_min = -2.0*np.ones(4)
 
-# Calculate torques
-tau_test = np.dot(J.T, F_test)
+f_poly = capacity.force_polytope(J, t_min, t_max) # calculate the polytope
 
-# Calculate actuator torques
-tau_act_test = np.dot(Jjoint.T, tau_test)
+print(f_poly.vertices) # display the vertices
 
-# # Visualize
-# fig = plt.figure()
-# ax = fig.add_subplot(111, projection='3d')
+# plotting the polytope
 
-# visualize_finger(ax, T, obj, 0.02)
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
 
-# # plot ee vel and joint vels
-# v_scale = 0.5
-# show_ee_vel_joint_vels(ax, T, v_test, qd_test, v_scale)
+# draw finger
+visualize_finger(ax, T, obj, 0.02)
 
-# # plot force and torques
-# # f_scale = 0.5
-# # show_ee_force_joint_torques(ax, T, F_test, tau_test, f_scale)
+# draw faces and vertices
+plot_polytope(plot=ax, 
+              polytope=f_poly, 
+              label='force', 
+              edge_color='black', 
+              face_color=[0.75,0.0,0.75],
+              alpha = 0.4,
+              center = p_ee,
+              scale = 0.0002,
+              show_vertices = False)
 
-# ax.set_aspect('equal')
-# ax.view_init(50, 75)
+ax.set_aspect('equal')
+ax.view_init(50, 75)
 
-# plt.show()
+plt.legend()
+plt.show()
 
-# visualize finger using plotly
-visualize_finger_plotly(T, obj, 0.02)

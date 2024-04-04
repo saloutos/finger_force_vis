@@ -41,7 +41,7 @@ Jact = np.array([[1.0, 0.0, 0.0, 0.0],
 # from actuator space to joint space, i.e. thetadot = Jjoint*phi_dot
 Jjoint = np.linalg.pinv(Jact)
 
-# torque limits 
+# torque limits
 t_max = 2.0*np.ones(4)  # joint torque limits max and min
 t_min = -2.0*np.ones(4)
 

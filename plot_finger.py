@@ -29,14 +29,16 @@ q_test = np.array([-0.3, 0.4, 0.2, 0.1])  # mcr, mcp, pip, dip
 qd_test = np.array([1.0, 0.0, 0.0, 0.0])  # mcr, mcp, pip, dip
 F_test = np.array([1.0, 1.0, 0.0])  # x, y, z at end effector
 
+# task space jacobian: v = J*qdot, tau = J^T * F
+
 T, J  = finger_kinematics(q_test)
 
-# from joint space to actuator space, i.e. phidot = Jact*theta_dot
+# from joint space to actuator space, i.e. qdot_phi = Jact*qdot_theta, tau_theta = Jact^T * tau_phi
 Jact = np.array([[1.0, 0.0, 0.0, 0.0],
                  [-16.38/15.98, 1.0, 0.0, 0.0],
                  [11.48/15.98, 9.98/14.38, 1.0, 0.0],
                  [-8.08/15.98, 5.58/14.38, 9.98/14.38, 1.0]])
-# from actuator space to joint space, i.e. thetadot = Jjoint*phi_dot
+# from actuator space to joint space, i.e. qdot_theta = Jjoint*qdot_phi                                                                                                                                                                                                             , tau_phi = Jjoint^T * tau_theta
 Jjoint = np.linalg.pinv(Jact)
 
 # Calculate velocities

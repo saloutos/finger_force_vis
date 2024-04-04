@@ -107,6 +107,24 @@ def Rz(theta):
                   [0, 0, 1]])
     return R
 
+def random_three_vector(n=1):
+    """
+    Generates a random 3D unit vector (direction) with a uniform spherical distribution
+    Algo from http://stackoverflow.com/questions/5408276/python-uniform-spherical-distribution
+    :return:
+    """
+    vecs = np.zeros((n,3))
+    for i in range(n):
+        phi = np.random.uniform(0,np.pi*2)
+        costheta = np.random.uniform(-1,1)
+
+        theta = np.arccos( costheta )
+        vecs[i,0] = np.sin( theta) * np.cos( phi ) # x
+        vecs[i,1] = np.sin( theta) * np.sin( phi ) # y
+        vecs[i,2] = np.cos( theta ) # z
+
+    return vecs
+
 def visualize_finger(axs, T, obj, SE3_scale):
     
     # Draw origin

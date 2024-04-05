@@ -23,6 +23,7 @@ import scipy.io
 import plotly.graph_objects as go
 import pycapacity.robot as capacity
 import scipy.optimize
+import scipy.optimize
 from scipy.spatial import ConvexHull
 import time
 from utils import *
@@ -46,46 +47,31 @@ Jjoint = np.linalg.pinv(Jact)
 q = np.array([-np.pi/2, 0.5, 0.5, 0.5])  # mcr, mcp, pip, dip
 # calculate task-space jacobian
 T, Jtask = finger_kinematics(q)
-
-
 # generate some unit vectors
 n = 1000
 vecs = random_three_vector(n).T
-# u = np.array([[0.0, 1.0, 0.0]]).T
 
-forces = np.empty((1,3))
 force_mags = []
-
+forces = []
 loop_start = time.time()
-
 for i in range(n):
-
     u = vecs[:,i].reshape((3,1))
-
     # solve lin prog for each unit vector to get force magnitude
     c =np.array([-1.0])
-
     A_up = Jjoint.T @ Jtask.T @ u
     A_low = -1.0*A_up
     b_up = np.array([tau_lim, tau_lim, tau_lim, tau_lim])
     b_low = -1.0*-1.0*b_up
-
     A_ub = np.vstack((A_up,A_low))
     b_ub = np.concatenate((b_up,b_low))
-
     start = time.time()
-    fmag = scipy.optimize.linprog(c,A_ub,b_ub,bounds=(0,F_lim))
+    f_sol = scipy.optimize.linprog(c,A_ub,b_ub,bounds=(0,F_lim))
     end = time.time()-start
-    # print(end)
-
-    if fmag.success==True:
-        print(i)
-        force_mags.append(fmag.x[0])
-        # print(fmag.x[0])
-        force = fmag.x[0] * u.T
-        forces = np.append(forces, force, axis=0)
-        # print(force)
-
+    if f_sol.success==True:
+        force_mags.append(f_sol.x[0])
+        force = f_sol.x[0] * u.T
+        forces.append(force.squeeze())
+forces = np.array(forces)
 loop_end = time.time()-loop_start
 print(loop_end)
 
@@ -105,11 +91,34 @@ potential_hull = ConvexHull(potential_force_limits.T)
 potential_vertices = potential_hull.points
 potential_faces = potential_hull.simplices
 
+# now, try to use pycapacity library
+t_max = tau_lim*np.ones(4)
+t_min = -tau_lim*np.ones(4)
+Jstar = Jtask @ Jjoint
+f_poly = capacity.force_polytope(Jstar, t_min, t_max)
+f_poly.find_faces()
+f_poly.find_halfplanes()
+poly_v = np.array(f_poly.vertices).T
+poly_F = np.array(f_poly.face_indices)
 
+# try to find boundary points along sampled vectors
+p_force_mags = []
+p_forces = []
+loop_start = time.time()
+for i in range(n):
+    u = vecs[:,i].reshape((3,1))
+    # solve lin prog for each unit vector to get force magnitude
+    p_sol = scipy.optimize.linprog(-1.0, f_poly.H @ u, f_poly.d)
+    end = time.time()-start
+    if p_sol.success==True:
+        p_force_mags.append(p_sol.x[0])
+        p_force = p_sol.x[0] * u.T
+        p_forces.append(p_force.squeeze())
+p_forces = np.array(p_forces)
+loop_end = time.time()-loop_start
+print(loop_end)
 
-
-
-# now, plot both hulls
+# now, plot the hulls
 fig = go.Figure()
 
 fig.add_trace( go.Scatter3d(x=forces[:,0],y=forces[:,1],z=forces[:,2], mode='markers' ) )
@@ -119,9 +128,15 @@ fig.add_trace( go.Mesh3d( x=force_vertices[:,0], y=force_vertices[:,1], z=force_
                             i=force_faces[:,0], j=force_faces[:,1], k=force_faces[:,2], \
                             opacity=0.15) )
 
-fig.add_trace( go.Mesh3d( x=potential_vertices[:,0], y=potential_vertices[:,1], z=potential_vertices[:,2], \
-                            i=potential_faces[:,0], j=potential_faces[:,1], k=potential_faces[:,2], \
-                            opacity=0.15) )
+# fig.add_trace( go.Mesh3d( x=potential_vertices[:,0], y=potential_vertices[:,1], z=potential_vertices[:,2], \
+#                             i=potential_faces[:,0], j=potential_faces[:,1], k=potential_faces[:,2], \
+#                             opacity=0.15) )
+
+fig.add_trace( go.Mesh3d( x=poly_v[:,0], y=poly_v[:,1], z=poly_v[:,2], \
+                         i=poly_F[:,0], j=poly_F[:,1], k=poly_F[:,2], \
+                            opacity=0.15))
+
+fig.add_trace( go.Scatter3d(x=p_forces[:,0],y=p_forces[:,1],z=p_forces[:,2], mode='markers' ) )
 
 fig.update_scenes(aspectmode='data')
 

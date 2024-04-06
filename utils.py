@@ -145,7 +145,7 @@ def visualize_finger(axs, T, obj, SE3_scale):
     axs.set_zlabel('Z')
     axs.grid(True)
 
-def visualize_finger_plotly(fig, T, obj, SE3_scale):
+def visualize_finger_plotly(fig, T, obj, alpha=1.0, SE3_scale=1.0):
     
     # meshes = []
 
@@ -158,7 +158,8 @@ def visualize_finger_plotly(fig, T, obj, SE3_scale):
         # meshes.append( go.Mesh3d( x=V[:,0], y=V[:,1], z=V[:,2], \
         #                         i = F[:,0], j=F[:,1], k=F[:,2]) )
         fig.add_trace( go.Mesh3d( x=V[:,0], y=V[:,1], z=V[:,2], \
-                                i = F[:,0], j=F[:,1], k=F[:,2]) )
+                                i = F[:,0], j=F[:,1], k=F[:,2], \
+                                opacity=alpha) )
 
     # fig = go.Figure(data=meshes)
 

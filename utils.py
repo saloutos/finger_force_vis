@@ -145,32 +145,42 @@ def visualize_finger(axs, T, obj, SE3_scale):
     axs.set_zlabel('Z')
     axs.grid(True)
 
-def visualize_finger_plotly(fig, T, obj, alpha=1.0, SE3_scale=1.0):
-    
-    # meshes = []
-
+def visualize_finger_plotly(fig, T, obj, alpha=1.0, SE3_scale=None):
     # Draw each body and its frame
     for ii in range(4):
         V = np.dot(T[:3, :3, ii], obj[ii].v.T).T + T[:3, 3, ii]
         F = np.array(obj[ii].f['v'])
-        # axs.plot_trisurf(V[:, 0], V[:, 1], V[:, 2], triangles=F, color=(0, 0, 0, 0.15))
-
-        # meshes.append( go.Mesh3d( x=V[:,0], y=V[:,1], z=V[:,2], \
-        #                         i = F[:,0], j=F[:,1], k=F[:,2]) )
         fig.add_trace( go.Mesh3d( x=V[:,0], y=V[:,1], z=V[:,2], \
                                 i = F[:,0], j=F[:,1], k=F[:,2], \
-                                opacity=alpha) )
+                                opacity=alpha, \
+                                color="#808080") )
+        draw_SE3_plotly(fig, T[:,:,ii], scale=SE3_scale)
+    # draw end effector frame too
+    draw_SE3_plotly(fig, T[:,:,4], scale=SE3_scale)
 
-    # fig = go.Figure(data=meshes)
 
-    # # Draw end-effector frame
-    # draw_SE3(axs, T[:, :, 4], SE3_scale, 'rgb')
-
-    # axs.set_xlabel('X')
-    # axs.set_ylabel('Y')
-    # axs.set_zlabel('Z')
-    # axs.grid(True)
-
+def draw_SE3_plotly(fig, T, scale=None):
+    p = T[:3, 3]
+    if scale is None:
+        ax = p + T[:3, 0] * 0.12
+        ay = p + T[:3, 1] * 0.12
+        az = p + T[:3, 2] * 0.12
+    else:
+        ax = p + T[:3, 0] * scale
+        ay = p + T[:3, 1] * scale
+        az = p + T[:3, 2] * scale
+    # add x-axis
+    fig.add_trace( go.Scatter3d(x=[p[0],ax[0]],y=[p[1],ax[1]],z=[p[2],ax[2]], \
+                                    line_color='red', line_width=4, \
+                                    mode='lines', showlegend=False ) )
+    # add y-axis
+    fig.add_trace( go.Scatter3d(x=[p[0],ay[0]],y=[p[1],ay[1]],z=[p[2],ay[2]], \
+                                    line_color='green', line_width=4, \
+                                    mode='lines', showlegend=False ) )
+    # add z-axis
+    fig.add_trace( go.Scatter3d(x=[p[0],az[0]],y=[p[1],az[1]],z=[p[2],az[2]], \
+                                    line_color='blue', line_width=4, \
+                                    mode='lines',showlegend=False ) )
 
 
 
@@ -230,15 +240,15 @@ def show_ee_force_joint_torques(axs, T, F, tau, scale):
     axs.quiver(p_plt[0], p_plt[1], p_plt[2], tau_plt[0], tau_plt[1], tau_plt[2], color=[1.0, 0.65, 0.0])
 
 
-def finger_kinematics(q):
+def finger_kinematics(q, T0=np.eye(4)):
     # link lengths and offsets
     l0 = 0.0185
     l1 = 0.050
     l2 = 0.040
-    l3 = 0.028  # 0.0365
+    l3 = 0.032 # 0.028
 
     # link transforms
-    Tmcr_l = np.eye(4)
+    Tmcr_l = T0
     Tmcp_l = np.eye(4)
     Tmcp_l[0, 3] = l0
     Tpip_l = np.eye(4)
